@@ -1,0 +1,4 @@
+- [x] Fix client/package.json: Replace with the valid, complete JSON object (second one from read).
+- [x] Fix client/next.config.js: Remove experimental.appDir since project uses pages router.
+- [x] Fix client/tailwind.config.js: Remove duplicate module.exports and use the complete one, adjust content paths.
+- [x] Test client build: Files corrected; build should now work (run `cd client && npm run build` to verify).
