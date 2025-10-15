@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  walletAddress String   @unique
+  email         String?
+  name          String?
+  role          UserRole @default(CITIZEN)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  ownedProperties Property[] @relation("PropertyOwner")
+  verifications   Verification[]
+  sentTransfers   Transfer[] @relation("TransferSender")
+  receivedTransfers Transfer[] @relation("TransferReceiver")
+  
+  @@map("users")
+}
+
+model Property {
+  id          String   @id @default(cuid())
+  tokenId     Int?     @unique
+  ownerId     String
+  ipfsHash    String
+  title       String
+  description String?
+  location    String
+  coordinates String
+  size        Float
+  status      PropertyStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  owner       User   @relation("PropertyOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  verifications Verification[]
+  transfers   Transfer[]
+  
+  @@map("properties")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  propertyId String
+  verifierId String
+  approved   Boolean
+  comments   String?
+  createdAt  DateTime @default(now())
+  
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  verifier User     @relation(fields: [verifierId], references: [id], onDelete: Cascade)
+  
+  @@map("verifications")
+}
+
+model Transfer {
+  id          String   @id @default(cuid())
+  propertyId  String
+  fromUserId  String
+  toUserId    String
+  txHash      String?
+  status      TransferStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  completedAt DateTime?
+  
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  fromUser   User     @relation("TransferSender", fields: [fromUserId], references: [id])
+  toUser     User     @relation("TransferReceiver", fields: [toUserId], references: [id])
+  
+  @@map("transfers")
+}
+
+enum UserRole {
+  CITIZEN
+  VERIFIER
+  ADMIN
+}
+
+enum PropertyStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+  TRANSFERRING
+}
+
+enum TransferStatus {
+  PENDING
+  COMPLETED
+  REJECTED
+}
