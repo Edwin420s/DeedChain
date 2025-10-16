@@ -1,5 +1,20 @@
 'use client'
 
+/**
+ * DeedChain: Admin Verification Queue (App Router)
+ *
+ * Purpose:
+ * - Display pending property registrations for DAO/government verifiers.
+ * - Allow Approve/Reject actions which trigger backend and on-chain workflows.
+ *
+ * API Contracts:
+ * - GET `adminAPI.getPendingProperties()` -> { properties: Array<{ id, owner, location, area, ipfsCid }> }
+ * - POST `adminAPI.verifyProperty({ id, approved })`
+ *
+ * Notes:
+ * - Contains development fallback data if backend is unavailable.
+ */
+
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { adminAPI } from '../../../utils/api'

@@ -1,5 +1,21 @@
 'use client'
 
+/**
+ * DeedChain: Properties List Page (App Router)
+ *
+ * Purpose:
+ * - Display all properties owned by the connected wallet.
+ * - Link to property detail pages for deeper inspection and actions.
+ *
+ * Data Flow:
+ * - On wallet connect, query `propertyAPI.list({ owner })`.
+ * - Fallback to mock data in development when backend is not available.
+ *
+ * Integration:
+ * - `wagmi` for account state, `utils/api` for REST calls.
+ * - Items link to `app/property/[id]/page.jsx`.
+ */
+
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useAccount } from 'wagmi'

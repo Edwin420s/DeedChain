@@ -1,5 +1,20 @@
 'use client'
 
+/**
+ * DeedChain: Transfer Ownership Page (App Router)
+ *
+ * Purpose:
+ * - Initiate a deed NFT ownership transfer from the current wallet to a recipient address.
+ *
+ * Flow:
+ * - User enters tokenId and recipient address -> submit via `propertyAPI.transfer()`.
+ * - Backend coordinates on-chain transfer and multi-party confirmations.
+ *
+ * Dependencies:
+ * - `wagmi` for wallet state.
+ * - `utils/api` for backend integration.
+ */
+
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
 import toast from 'react-hot-toast'

@@ -1,5 +1,20 @@
 'use client'
 
+/**
+ * DeedChain: Property Detail Page (App Router)
+ *
+ * Purpose:
+ * - Display a single property's on-chain/off-chain details for a given token ID.
+ * - Show location, coordinates, area, IPFS CID, ownership, and history.
+ *
+ * Data Fetching:
+ * - Attempts `propertyAPI.get(id)` to retrieve property details from backend indexing.
+ * - Falls back to a development mock if backend is not yet available.
+ *
+ * Routing:
+ * - Dynamic segment `[id]` via `useParams()`.
+ */
+
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { propertyAPI } from '../../../utils/api'

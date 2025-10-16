@@ -32,4 +32,15 @@ body {
   .input-field {
     @apply w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-accent-teal transition-colors;
   }
+
+  /* Glass morphism utility used by multiple pages */
+  .glass-effect {
+    @apply bg-white/5 border border-white/10 rounded-xl;
+    backdrop-filter: blur(10px);
+  }
+
+  /* Subtle glow on hover for interactive cards/buttons */
+  .shadow-glow-hover:hover {
+    box-shadow: 0 0 0 2px rgba(100, 255, 218, 0.15), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
 }

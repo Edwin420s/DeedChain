@@ -1,5 +1,34 @@
 'use client'
 
+/**
+ * DeedChain: Register Property Page (App Router)
+ *
+ * Purpose:
+ * - Provide a guided UI for land/property registration.
+ * - Upload supporting documents to IPFS (via Web3.Storage) and obtain a CID.
+ * - Submit a registration payload to the backend API which continues the flow
+ *   (persist metadata, trigger on-chain mint or a verification workflow).
+ *
+ * Data Flow:
+ * - User selects local documents -> `uploadToIPFS(files)` -> returns IPFS CID
+ * - Form data + `owner` (from wallet) + `ipfsCid` POSTed to `propertyAPI.register()`
+ * - Backend is expected to (later) mint a pending deed NFT or enqueue verification
+ *
+ * Key Dependencies:
+ * - wagmi `useAccount` for wallet state
+ * - RainbowKit `ConnectButton` for wallet connection UI
+ * - `utils/ipfs` for IPFS upload (Web3.Storage)
+ * - `utils/api` for REST calls
+ *
+ * Expected Environment Variables:
+ * - NEXT_PUBLIC_WEB3_STORAGE_TOKEN: API token for Web3.Storage
+ * - NEXT_PUBLIC_API_URL: Base URL for backend API
+ *
+ * Notes:
+ * - This page is intentionally self-contained and framework-agnostic for the backend.
+ * - Replace temporary toasts/mocks once the backend endpoints are available.
+ */
+
 import { useState } from 'react'
 import { useAccount } from 'wagmi'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
