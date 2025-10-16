@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -35,24 +35,25 @@ api.interceptors.response.use(
 )
 
 export const propertyAPI = {
-  register: (data) => api.post('/property/register', data),
-  get: (id) => api.get(`/property/${id}`),
-  list: (filters = {}) => api.get('/property', { params: filters }),
-  transfer: (data) => api.post('/property/transfer', data),
-  tokenize: (data) => api.post('/property/tokenize', data),
+  register: (data) => api.post('/properties/register', data),
+  get: (id) => api.get(`/properties/${id}`),
+  list: (filters = {}) => api.get('/properties', { params: filters }),
+  transfer: (data) => api.post('/transfers/initiate', data),
+  tokenize: (data) => api.post('/properties/tokenize', data),
 }
 
 export const userAPI = {
-  getProfile: (address) => api.get(`/user/${address}`),
-  getProperties: (address) => api.get(`/user/${address}/properties`),
-  updateProfile: (data) => api.put('/user/profile', data),
+  authWallet: (payload) => api.post('/users/auth/wallet', payload),
+  getProfile: () => api.get('/users/profile'),
+  getProperties: () => api.get('/properties/user/my-properties'),
+  updateProfile: (data) => api.put('/users/profile', data),
 }
 
 export const adminAPI = {
-  getStats: () => api.get('/admin/stats'),
-  getPendingProperties: () => api.get('/admin/pending-properties'),
-  verifyProperty: (data) => api.post('/admin/verify', data),
-  getRecentActivity: () => api.get('/admin/recent-activity'),
+  getStats: () => api.get('/admin/dashboard'),
+  getPendingProperties: () => api.get('/properties', { params: { status: 'PENDING' } }),
+  verifyProperty: (data) => api.post('/verifications/:propertyId/verify', data),
+  getRecentActivity: () => api.get('/admin/logs'),
 }
 
 export const marketplaceAPI = {

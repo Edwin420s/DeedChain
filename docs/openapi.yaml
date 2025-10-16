@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  title: DeedChain Backend API
+  version: 0.1.0
+  description: REST API for property registration, verification, transfer, and indexing.
+servers:
+  - url: https://api.deedchain.example.com
+paths:
+  /api/property/register:
+    post:
+      summary: Register a new property and submit IPFS metadata
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ipfsHash:
+                  type: string
+                  example: ipfs://bafy...xyz
+                geoData:
+                  type: string
+                  example: '{"lat": -1.28, "lng": 36.82}'
+                metadata:
+                  type: object
+      responses:
+        '200':
+          description: Property registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deedId:
+                    type: integer
+                  txHash:
+                    type: string
+                  status:
+                    type: string
+  /api/property/{id}:
+    get:
+      summary: Get property details by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Property details
+  /api/transfer:
+    post:
+      summary: Initiate property transfer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deedId:
+                  type: integer
+                to:
+                  type: string
+      responses:
+        '200':
+          description: Transfer initiated
+  /api/verify:
+    post:
+      summary: Verify a deed (validator only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deedId:
+                  type: integer
+                approve:
+                  type: boolean
+      responses:
+        '200':
+          description: Deed verified status updated
+  /api/user/properties:
+    get:
+      summary: List properties owned by the authenticated user
+      responses:
+        '200':
+          description: List of owned deeds
