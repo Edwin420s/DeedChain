@@ -52,7 +52,7 @@ export const userAPI = {
 export const adminAPI = {
   getStats: () => api.get('/admin/dashboard'),
   getPendingProperties: () => api.get('/properties', { params: { status: 'PENDING' } }),
-  verifyProperty: (data) => api.post('/verifications/:propertyId/verify', data),
+  verifyProperty: (propertyId, data) => api.post(`/verifications/${propertyId}/verify`, data),
   getRecentActivity: () => api.get('/admin/logs'),
 }
 

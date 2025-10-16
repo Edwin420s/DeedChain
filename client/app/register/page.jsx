@@ -43,6 +43,7 @@ export default function RegisterPage() {
   const [files, setFiles] = useState([])
   const [cid, setCid] = useState('')
   const [form, setForm] = useState({
+    title: '',
     location: '',
     area: '',
     lat: '',
@@ -97,14 +98,12 @@ export default function RegisterPage() {
     }
 
     const payload = {
-      owner: address,
-      ipfsCid: cid,
-      location: form.location,
-      area: form.area,
-      coordinates: { lat: form.lat, lng: form.lng },
-      surveyNumber: form.surveyNumber,
+      title: form.title || form.surveyNumber || form.location,
       description: form.description,
-      // The backend will mint/pin metadata JSON as needed.
+      location: form.location,
+      coordinates: `${form.lat || ''},${form.lng || ''}`,
+      size: parseFloat(form.area || '0'),
+      ipfsCid: cid,
     }
 
     try {
@@ -112,7 +111,7 @@ export default function RegisterPage() {
       await propertyAPI.register(payload)
       toast.success('Property registration submitted for verification')
       // Reset form
-      setForm({ location: '', area: '', lat: '', lng: '', surveyNumber: '', description: '' })
+      setForm({ title: '', location: '', area: '', lat: '', lng: '', surveyNumber: '', description: '' })
       setFiles([])
       setCid('')
     } catch (err) {
@@ -142,6 +141,10 @@ export default function RegisterPage() {
         <div>
           <h2 className="text-xl font-semibold mb-4">Property Information</h2>
           <div className="grid md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block text-sm text-text-secondary mb-1">Title *</label>
+              <input name="title" value={form.title} onChange={onChange} placeholder="Parcel Title or Short Name" className="input-field" />
+            </div>
             <div className="md:col-span-2">
               <label className="block text-sm text-text-secondary mb-1">Location *</label>
               <input name="location" value={form.location} onChange={onChange} required placeholder="e.g., Karen, Nairobi" className="input-field" />

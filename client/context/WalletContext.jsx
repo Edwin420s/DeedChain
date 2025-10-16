@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { userAPI } from '../utils/api'
 
 const WalletContext = createContext()
 
@@ -21,18 +22,23 @@ export const WalletProvider = ({ children }) => {
 
   useEffect(() => {
     if (isConnected && address) {
-      fetchUserProfile(address)
+      authenticateAndLoadProfile(address)
     }
   }, [isConnected, address])
 
-  const fetchUserProfile = async (walletAddress) => {
+  const authenticateAndLoadProfile = async (walletAddress) => {
     try {
-      const response = await fetch(`/api/user/${walletAddress}`)
-      const profile = await response.json()
+      const authRes = await userAPI.authWallet({ walletAddress })
+      const token = authRes?.data?.data?.token
+      if (token) {
+        localStorage.setItem('authToken', token)
+      }
+      const profileRes = await userAPI.getProfile()
+      const profile = profileRes?.data?.data?.user || null
       setUserProfile(profile)
-      setUserRole(profile.role || 'user')
+      setUserRole((profile?.role || 'CITIZEN').toLowerCase())
     } catch (error) {
-      console.error('Failed to fetch user profile:', error)
+      console.error('Authentication/profile load failed:', error)
     }
   }
 

@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { useContract, useProvider, useSigner } from 'wagmi'
+import { useProvider, useSigner, useChainId } from 'wagmi'
 import { ethers } from 'ethers'
-import { CONTRACT_ADDRESSES } from '../utils/constants'
+import { CONTRACT_ADDRESSES as ADDR_FROM_CONSTANTS } from '../utils/constants'
+import { CONTRACT_ABIS } from '../utils/contracts'
 
 const ContractContext = createContext()
 
@@ -16,7 +17,8 @@ export const useContracts = () => {
 export const ContractProvider = ({ children }) => {
   const provider = useProvider()
   const { data: signer } = useSigner()
-  
+  const chainId = useChainId()
+
   const [deedNFT, setDeedNFT] = useState(null)
   const [landRegistry, setLandRegistry] = useState(null)
   const [transferManager, setTransferManager] = useState(null)
@@ -28,25 +30,23 @@ export const ContractProvider = ({ children }) => {
   }, [provider, signer])
 
   const initializeContracts = async () => {
-    // Contract ABIs would be imported here
-    // For now, we'll set up the contract instances
-    const deedNFTContract = new ethers.Contract(
-      CONTRACT_ADDRESSES.DEED_NFT,
-      [], // ABI would go here
-      signer || provider
-    )
-    
-    const landRegistryContract = new ethers.Contract(
-      CONTRACT_ADDRESSES.LAND_REGISTRY,
-      [], // ABI would go here
-      signer || provider
-    )
-    
-    const transferManagerContract = new ethers.Contract(
-      CONTRACT_ADDRESSES.TRANSFER_MANAGER,
-      [], // ABI would go here
-      signer || provider
-    )
+    const addresses = ADDR_FROM_CONSTANTS?.[chainId] || ADDR_FROM_CONSTANTS?.[137] || {}
+
+    const deedNFTAddr = addresses.DEED_NFT || addresses.DeedNFT
+    const landRegistryAddr = addresses.LAND_REGISTRY || addresses.LandRegistry
+    const transferManagerAddr = addresses.TRANSFER_MANAGER || addresses.TransferManager
+
+    const deedNFTContract = deedNFTAddr
+      ? new ethers.Contract(deedNFTAddr, CONTRACT_ABIS.DeedNFT || [], signer || provider)
+      : null
+
+    const landRegistryContract = landRegistryAddr
+      ? new ethers.Contract(landRegistryAddr, CONTRACT_ABIS.LandRegistry || [], signer || provider)
+      : null
+
+    const transferManagerContract = transferManagerAddr
+      ? new ethers.Contract(transferManagerAddr, CONTRACT_ABIS.TransferManager || [], signer || provider)
+      : null
 
     setDeedNFT(deedNFTContract)
     setLandRegistry(landRegistryContract)
@@ -57,7 +57,7 @@ export const ContractProvider = ({ children }) => {
     deedNFT,
     landRegistry,
     transferManager,
-    isInitialized: deedNFT && landRegistry && transferManager,
+    isInitialized: Boolean(deedNFT && landRegistry),
   }
 
   return (
