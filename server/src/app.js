@@ -1,3 +1,9 @@
+/**
+ * DeedChain API Server (Express)
+ * Purpose: Expose REST API under /api with security middleware (helmet, cors, rate limiting),
+ * logging, health check, and centralized error handling.
+ * Notes: PORT defaults to 5000; CORS origin taken from CLIENT_URL; routes mounted at /api.
+ */
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');

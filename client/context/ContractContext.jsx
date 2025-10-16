@@ -1,3 +1,9 @@
+/**
+ * ContractContext
+ * Provides initialized Ethers.js contract instances selected by current chainId.
+ * Sources addresses from CONTRACT_ADDRESSES and ABIs from utils/contracts.
+ * Falls back to chainId 137 if current chain is not configured.
+ */
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useProvider, useSigner, useChainId } from 'wagmi'
 import { ethers } from 'ethers'

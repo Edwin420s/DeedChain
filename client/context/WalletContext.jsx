@@ -1,3 +1,8 @@
+/**
+ * WalletContext
+ * Handles wallet connection state and bootstraps backend authentication.
+ * Flow: on connect -> POST /users/auth/wallet -> store JWT -> GET /users/profile.
+ */
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { userAPI } from '../utils/api'

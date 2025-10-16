@@ -1,3 +1,15 @@
+/**
+ * User Routes
+ * Base: /api/users
+ * Auth: JWT required for profile, stats, admin operations. Wallet auth is public.
+ * Endpoints:
+ *  - POST /auth/wallet: Authenticate via wallet address (optionally with signature).
+ *  - GET /profile: Get current user profile (JWT).
+ *  - PUT /profile: Update current user profile (JWT).
+ *  - GET /stats: Usage statistics for current user (JWT).
+ *  - GET /: Admin list users with filters (ADMIN role).
+ *  - PATCH /:userId/role: Update user role (ADMIN role).
+ */
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');

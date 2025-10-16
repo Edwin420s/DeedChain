@@ -1,3 +1,14 @@
+/**
+ * Property Routes
+ * Base: /api/properties
+ * Auth: JWT required for all operations.
+ * Endpoints:
+ *  - POST /register: Register new property (stores metadata to IPFS, creates DB record).
+ *  - GET /: List properties with filtering and pagination.
+ *  - GET /:id: Get property details by ID.
+ *  - GET /user/my-properties: List current user's properties.
+ *  - PUT /:id: Update a PENDING property (owner-only).
+ */
 const express = require('express');
 const { PrismaClient } = require('@prisma/client');
 const { authenticateToken, requireRole } = require('../middleware/authMiddleware');
