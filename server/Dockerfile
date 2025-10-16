@@ -1,5 +1,8 @@
 FROM node:18-alpine
 
+# Install dependencies for node-gyp
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
 
 # Copy package files
@@ -17,6 +20,12 @@ COPY . .
 
 # Create logs directory
 RUN mkdir -p logs
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S deedchain -u 1001
+RUN chown -R deedchain:nodejs /app
+USER deedchain
 
 # Expose port
 EXPOSE 5000
