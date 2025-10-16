@@ -105,6 +105,9 @@ contract TokenizationManager is AccessControl, IERC721Receiver {
         
         // Mint initial shares to the contract for distribution
         landShareToken.mint(address(this), totalShares);
+
+        // Mark property as tokenized in DeedNFT
+        deedNFT.setTokenizedStatus(propertyId, true);
         
         emit PropertyTokenized(propertyId, address(landShareToken), tokenName, tokenSymbol, totalShares, msg.sender);
         return address(landShareToken);
@@ -147,6 +150,9 @@ contract TokenizationManager is AccessControl, IERC721Receiver {
         deedNFT.safeTransferFrom(address(this), msg.sender, propertyId);
         
         tProperty.isActive = false;
+
+        // Mark property as no longer tokenized in DeedNFT
+        deedNFT.setTokenizedStatus(propertyId, false);
         
         emit PropertyRedeemed(propertyId, msg.sender, block.timestamp);
     }

@@ -107,7 +107,7 @@ contract PropertyMarketplace is AccessControl, ReentrancyGuard {
             deedNFT.transferFrom(msg.sender, address(this), assetId);
         } else {
             // For fractional shares
-            IERC20 fractionalToken = IERC20(address(assetId));
+            IERC20 fractionalToken = IERC20(address(uint160(assetId)));
             require(fractionalToken.balanceOf(msg.sender) >= quantity, "Insufficient shares");
             require(fractionalToken.allowance(msg.sender, address(this)) >= quantity, "Insufficient allowance");
             
@@ -203,7 +203,7 @@ contract PropertyMarketplace is AccessControl, ReentrancyGuard {
         if (listing.assetType == AssetType.FULL_PROPERTY) {
             deedNFT.transferFrom(address(this), buyer, listing.assetId);
         } else {
-            IERC20 fractionalToken = IERC20(address(listing.assetId));
+            IERC20 fractionalToken = IERC20(address(uint160(listing.assetId)));
             fractionalToken.transfer(buyer, listing.quantity);
         }
         
@@ -222,7 +222,7 @@ contract PropertyMarketplace is AccessControl, ReentrancyGuard {
         if (listing.assetType == AssetType.FULL_PROPERTY) {
             deedNFT.transferFrom(address(this), msg.sender, listing.assetId);
         } else {
-            IERC20 fractionalToken = IERC20(address(listing.assetId));
+            IERC20 fractionalToken = IERC20(address(uint160(listing.assetId)));
             fractionalToken.transfer(msg.sender, listing.quantity);
         }
         

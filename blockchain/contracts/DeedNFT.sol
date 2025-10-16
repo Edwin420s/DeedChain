@@ -16,6 +16,7 @@ contract DeedNFT is ERC721, ERC721URIStorage, AccessControl {
     
     bytes32 public constant VERIFIER_ROLE = keccak256("VERIFIER_ROLE");
     bytes32 public constant REGISTRAR_ROLE = keccak256("REGISTRAR_ROLE");
+    bytes32 public constant TOKENIZER_ROLE = keccak256("TOKENIZER_ROLE");
     
     Counters.Counter private _tokenIdCounter;
     
@@ -48,6 +49,7 @@ contract DeedNFT is ERC721, ERC721URIStorage, AccessControl {
     constructor() ERC721("DeedChain Property", "DEED") {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(REGISTRAR_ROLE, msg.sender);
+        _grantRole(TOKENIZER_ROLE, msg.sender);
     }
 
     function registerProperty(
@@ -91,6 +93,21 @@ contract DeedNFT is ERC721, ERC721URIStorage, AccessControl {
     function getPropertyInfo(uint256 tokenId) public view returns (PropertyInfo memory) {
         require(_exists(tokenId), "Property does not exist");
         return propertyInfo[tokenId];
+    }
+
+    /**
+     * @dev Public existence check wrapper for external contracts
+     */
+    function exists(uint256 tokenId) public view returns (bool) {
+        return _exists(tokenId);
+    }
+
+    /**
+     * @dev Update tokenization status for a property. Restricted to TOKENIZER_ROLE.
+     */
+    function setTokenizedStatus(uint256 tokenId, bool status) public onlyRole(TOKENIZER_ROLE) {
+        require(_exists(tokenId), "Property does not exist");
+        propertyInfo[tokenId].isTokenized = status;
     }
 
     function supportsInterface(bytes4 interfaceId)
