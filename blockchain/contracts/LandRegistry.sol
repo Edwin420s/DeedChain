@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "./DeedNFT.sol";
+import "./DisputeResolution.sol";
 
 /**
  * @title LandRegistry
@@ -12,6 +13,7 @@ contract LandRegistry is AccessControl {
     bytes32 public constant TRANSFER_APPROVER_ROLE = keccak256("TRANSFER_APPROVER_ROLE");
     
     DeedNFT public deedNFT;
+    DisputeResolution public disputeResolution;
     
     struct TransferRequest {
         uint256 propertyId;
@@ -53,12 +55,22 @@ contract LandRegistry is AccessControl {
         deedNFT = DeedNFT(deedNFTAddress);
     }
 
+    /**
+     * @dev Set the dispute resolution module. Admin-only.
+     */
+    function setDisputeResolution(address disputeResolutionAddress) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        disputeResolution = DisputeResolution(disputeResolutionAddress);
+    }
+
     function initiateTransfer(
         uint256 propertyId,
         address to
     ) public returns (uint256) {
         require(deedNFT.ownerOf(propertyId) == msg.sender, "Not property owner");
         require(deedNFT.getPropertyInfo(propertyId).isVerified, "Property not verified");
+        if (address(disputeResolution) != address(0)) {
+            require(!disputeResolution.isPropertyFrozen(propertyId), "Property frozen due to dispute");
+        }
         
         uint256 requestId = uint256(keccak256(abi.encodePacked(propertyId, msg.sender, to, block.timestamp)));
         
@@ -93,6 +105,9 @@ contract LandRegistry is AccessControl {
         require(request.approved, "Transfer not approved");
         require(!request.executed, "Transfer already executed");
         require(msg.sender == request.from, "Only initiator can execute");
+        if (address(disputeResolution) != address(0)) {
+            require(!disputeResolution.isPropertyFrozen(request.propertyId), "Property frozen due to dispute");
+        }
         
         deedNFT.safeTransferFrom(request.from, request.to, request.propertyId);
         request.executed = true;

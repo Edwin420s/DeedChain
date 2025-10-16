@@ -88,11 +88,21 @@ async function main() {
   await deedChainRegistry.addTreasuryModule(deedChainTreasury.address);
   console.log("✅ Modules added to registry");
 
+  // Wire dispute module into LandRegistry so transfers respect freezes
+  if (landRegistry.setDisputeResolution) {
+    await landRegistry.setDisputeResolution(disputeResolution.address);
+    console.log("✅ LandRegistry linked to DisputeResolution");
+  }
+
   // Setup roles and permissions
   await deedNFT.grantRole(await deedNFT.VERIFIER_ROLE(), daoVerification.address);
   await deedNFT.grantRole(await deedNFT.REGISTRAR_ROLE(), landRegistry.address);
   await deedNFT.grantRole(await deedNFT.REGISTRAR_ROLE(), deployer.address);
-  
+  // Grant tokenization control to TokenizationManager
+  if (deedNFT.TOKENIZER_ROLE) {
+    await deedNFT.grantRole(await deedNFT.TOKENIZER_ROLE(), tokenizationManager.address);
+  }
+
   await deedToken.grantRole(await deedToken.MINTER_ROLE(), deedChainGovernance.address);
   
   // Add initial validators
