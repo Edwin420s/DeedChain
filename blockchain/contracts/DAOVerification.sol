@@ -2,54 +2,42 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "./DeedNFT.sol";
 
 /**
  * @title DAOVerification
- * @dev DAO-based verification system for land deeds
+ * @dev DAO-based verification system for property validation
  */
 contract DAOVerification is AccessControl {
-    using Counters for Counters.Counter;
+    using EnumerableSet for EnumerableSet.AddressSet;
     
-    bytes32 public constant VERIFIER_ROLE = keccak256("VERIFIER_ROLE");
-    bytes32 public constant DAO_MEMBER_ROLE = keccak256("DAO_MEMBER_ROLE");
+    bytes32 public constant VALIDATOR_ROLE = keccak256("VALIDATOR_ROLE");
     
-    Counters.Counter private _proposalIdCounter;
+    DeedNFT public deedNFT;
     
-    // Verification proposal structure
     struct VerificationProposal {
-        uint256 proposalId;
-        uint256 deedTokenId;
+        uint256 propertyId;
         address proposer;
-        string description;
-        uint256 votesFor;
-        uint256 votesAgainst;
         uint256 startTime;
         uint256 endTime;
+        uint256 yesVotes;
+        uint256 noVotes;
         bool executed;
         mapping(address => bool) hasVoted;
     }
     
-    // Mapping from proposal ID to proposal details
-    mapping(uint256 => VerificationProposal) public proposals;
+    mapping(uint256 => VerificationProposal) public verificationProposals;
+    EnumerableSet.AddressSet private validators;
     
-    // Mapping from deed token ID to active proposal ID
-    mapping(uint256 => uint256) public deedToProposal;
+    uint256 public constant VOTING_DURATION = 3 days;
+    uint256 public constant MIN_APPROVAL_THRESHOLD = 2; // Minimum votes required
     
-    // Voting period (3 days)
-    uint256 public constant VOTING_PERIOD = 3 days;
-    
-    // Minimum votes required for proposal execution
-    uint256 public constant MIN_VOTES = 3;
-    
-    // Events
     event VerificationProposed(
         uint256 indexed proposalId,
-        uint256 indexed deedTokenId,
+        uint256 indexed propertyId,
         address indexed proposer,
-        string description,
-        uint256 startTime,
-        uint256 endTime
+        uint256 startTime
     );
     
     event VoteCast(
@@ -59,156 +47,94 @@ contract DAOVerification is AccessControl {
         uint256 timestamp
     );
     
-    event ProposalExecuted(
+    event VerificationExecuted(
         uint256 indexed proposalId,
-        uint256 indexed deedTokenId,
+        uint256 indexed propertyId,
         bool approved,
         uint256 timestamp
     );
 
-    constructor() {
+    constructor(address deedNFTAddress) {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
-        _grantRole(DAO_MEMBER_ROLE, msg.sender);
+        _grantRole(VALIDATOR_ROLE, msg.sender);
+        deedNFT = DeedNFT(deedNFTAddress);
+        validators.add(msg.sender);
     }
 
-    /**
-     * @dev Propose verification for a land deed
-     * @param deedTokenId The deed NFT token ID to verify
-     * @param description Description of the verification proposal
-     */
-    function proposeVerification(
-        uint256 deedTokenId,
-        string memory description
-    ) external onlyRole(VERIFIER_ROLE) returns (uint256) {
-        require(deedToProposal[deedTokenId] == 0, "Proposal already exists for this deed");
+    function proposeVerification(uint256 propertyId) public onlyRole(VALIDATOR_ROLE) returns (uint256) {
+        require(!deedNFT.getPropertyInfo(propertyId).isVerified, "Property already verified");
+        require(verificationProposals[propertyId].proposer == address(0), "Proposal already exists");
         
-        _proposalIdCounter.increment();
-        uint256 proposalId = _proposalIdCounter.current();
+        VerificationProposal storage proposal = verificationProposals[propertyId];
+        proposal.propertyId = propertyId;
+        proposal.proposer = msg.sender;
+        proposal.startTime = block.timestamp;
+        proposal.endTime = block.timestamp + VOTING_DURATION;
+        proposal.executed = false;
         
-        VerificationProposal storage newProposal = proposals[proposalId];
-        newProposal.proposalId = proposalId;
-        newProposal.deedTokenId = deedTokenId;
-        newProposal.proposer = msg.sender;
-        newProposal.description = description;
-        newProposal.votesFor = 0;
-        newProposal.votesAgainst = 0;
-        newProposal.startTime = block.timestamp;
-        newProposal.endTime = block.timestamp + VOTING_PERIOD;
-        newProposal.executed = false;
-        
-        deedToProposal[deedTokenId] = proposalId;
-        
-        emit VerificationProposed(
-            proposalId,
-            deedTokenId,
-            msg.sender,
-            description,
-            block.timestamp,
-            block.timestamp + VOTING_PERIOD
-        );
-        
-        return proposalId;
+        emit VerificationProposed(propertyId, propertyId, msg.sender, block.timestamp);
+        return propertyId;
     }
 
-    /**
-     * @dev Cast vote on verification proposal
-     * @param proposalId The proposal ID to vote on
-     * @param support Whether to support the proposal (true = for, false = against)
-     */
-    function castVote(uint256 proposalId, bool support) external onlyRole(DAO_MEMBER_ROLE) {
-        VerificationProposal storage proposal = proposals[proposalId];
-        
-        require(proposal.proposalId != 0, "Proposal does not exist");
-        require(block.timestamp >= proposal.startTime, "Voting not started");
+    function voteOnVerification(uint256 propertyId, bool support) public onlyRole(VALIDATOR_ROLE) {
+        VerificationProposal storage proposal = verificationProposals[propertyId];
+        require(proposal.proposer != address(0), "Proposal does not exist");
         require(block.timestamp <= proposal.endTime, "Voting period ended");
         require(!proposal.hasVoted[msg.sender], "Already voted");
-        require(!proposal.executed, "Proposal already executed");
         
         proposal.hasVoted[msg.sender] = true;
         
         if (support) {
-            proposal.votesFor += 1;
+            proposal.yesVotes++;
         } else {
-            proposal.votesAgainst += 1;
+            proposal.noVotes++;
         }
         
-        emit VoteCast(proposalId, msg.sender, support, block.timestamp);
+        emit VoteCast(propertyId, msg.sender, support, block.timestamp);
     }
 
-    /**
-     * @dev Execute verification proposal
-     * @param proposalId The proposal ID to execute
-     */
-    function executeProposal(uint256 proposalId) external {
-        VerificationProposal storage proposal = proposals[proposalId];
-        
-        require(proposal.proposalId != 0, "Proposal does not exist");
+    function executeVerification(uint256 propertyId) public {
+        VerificationProposal storage proposal = verificationProposals[propertyId];
+        require(proposal.proposer != address(0), "Proposal does not exist");
         require(block.timestamp > proposal.endTime, "Voting period not ended");
         require(!proposal.executed, "Proposal already executed");
-        require(proposal.votesFor + proposal.votesAgainst >= MIN_VOTES, "Insufficient votes");
         
         proposal.executed = true;
         
-        bool approved = proposal.votesFor > proposal.votesAgainst;
-        
-        // In a real implementation, this would call the LandRegistry contract
-        // to update the verification status
-        
-        emit ProposalExecuted(proposalId, proposal.deedTokenId, approved, block.timestamp);
+        if (proposal.yesVotes >= MIN_APPROVAL_THRESHOLD && proposal.yesVotes > proposal.noVotes) {
+            deedNFT.verifyProperty(propertyId);
+            emit VerificationExecuted(propertyId, propertyId, true, block.timestamp);
+        } else {
+            emit VerificationExecuted(propertyId, propertyId, false, block.timestamp);
+        }
     }
 
-    /**
-     * @dev Get proposal details
-     * @param proposalId The proposal ID to query
-     */
-    function getProposal(uint256 proposalId) external view returns (
-        uint256,
-        uint256,
-        address,
-        string memory,
-        uint256,
-        uint256,
-        uint256,
-        uint256,
-        bool
+    function addValidator(address validator) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        validators.add(validator);
+        _grantRole(VALIDATOR_ROLE, validator);
+    }
+
+    function removeValidator(address validator) public onlyRole(DEFAULT_ADMIN_ROLE) {
+        validators.remove(validator);
+        _revokeRole(VALIDATOR_ROLE, validator);
+    }
+
+    function getValidators() public view returns (address[] memory) {
+        return validators.values();
+    }
+
+    function getProposalStatus(uint256 propertyId) public view returns (
+        uint256 yesVotes,
+        uint256 noVotes,
+        uint256 endTime,
+        bool executed
     ) {
-        VerificationProposal storage proposal = proposals[proposalId];
-        require(proposal.proposalId != 0, "Proposal does not exist");
-        
+        VerificationProposal storage proposal = verificationProposals[propertyId];
         return (
-            proposal.proposalId,
-            proposal.deedTokenId,
-            proposal.proposer,
-            proposal.description,
-            proposal.votesFor,
-            proposal.votesAgainst,
-            proposal.startTime,
+            proposal.yesVotes,
+            proposal.noVotes,
             proposal.endTime,
             proposal.executed
         );
-    }
-
-    /**
-     * @dev Check if address has voted on proposal
-     * @param proposalId The proposal ID
-     * @param voter The voter address
-     */
-    function hasVoted(uint256 proposalId, address voter) external view returns (bool) {
-        return proposals[proposalId].hasVoted[voter];
-    }
-
-    /**
-     * @dev Get active proposal for a deed
-     * @param deedTokenId The deed token ID
-     */
-    function getActiveProposal(uint256 deedTokenId) external view returns (uint256) {
-        return deedToProposal[deedTokenId];
-    }
-
-    /**
-     * @dev Get total number of proposals
-     */
-    function totalProposals() external view returns (uint256) {
-        return _proposalIdCounter.current();
     }
 }

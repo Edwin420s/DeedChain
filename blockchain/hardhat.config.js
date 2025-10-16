@@ -1,7 +1,9 @@
-require("@nomicfoundation/hardhat-toolbox");
+require("@nomiclabs/hardhat-waffle");
+require("@nomiclabs/hardhat-etherscan");
 require("dotenv").config();
 
-/** @type import('hardhat/config').HardhatUserConfig */
+const { PRIVATE_KEY, LINEA_RPC_URL, ETHERSCAN_API_KEY } = process.env;
+
 module.exports = {
   solidity: {
     version: "0.8.19",
@@ -14,13 +16,13 @@ module.exports = {
   },
   networks: {
     linea: {
-      url: process.env.LINEA_RPC_URL || "https://rpc.linea.build",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      url: LINEA_RPC_URL || "https://rpc.linea.build",
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
       chainId: 59144,
     },
-    lineaTestnet: {
-      url: process.env.LINEA_TESTNET_RPC_URL || "https://rpc.goerli.linea.build",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+    linea_testnet: {
+      url: LINEA_RPC_URL || "https://rpc.goerli.linea.build",
+      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
       chainId: 59140,
     },
     localhost: {
@@ -29,12 +31,14 @@ module.exports = {
   },
   etherscan: {
     apiKey: {
-      linea: process.env.LINEASCAN_API_KEY || "",
-      lineaTestnet: process.env.LINEASCAN_API_KEY || ""
+      linea: ETHERSCAN_API_KEY || "",
+      linea_testnet: ETHERSCAN_API_KEY || ""
     }
   },
-  gasReporter: {
-    enabled: process.env.REPORT_GAS !== undefined,
-    currency: "USD",
+  paths: {
+    sources: "./contracts",
+    tests: "./test",
+    cache: "./cache",
+    artifacts: "./artifacts"
   }
 };
