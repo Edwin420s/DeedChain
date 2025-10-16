@@ -1,0 +1,22 @@
+{
+  "name": "deedchain",
+  "private": true,
+  "version": "0.1.0",
+  "description": "DeedChain monorepo: client, server, blockchain",
+  "workspaces": [
+    "client",
+    "server",
+    "blockchain"
+  ],
+  "scripts": {
+    "bootstrap": "npm install --workspaces",
+    "build": "npm -w blockchain run build && npm -w server run build && npm -w client run build",
+    "start": "npm -w server run start && npm -w client run start",
+    "deploy": "pwsh -File scripts/deploy-all.ps1",
+    "seed": "pwsh -File scripts/seed-database.ps1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}
